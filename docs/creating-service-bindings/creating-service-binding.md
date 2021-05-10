@@ -28,7 +28,7 @@ spec:
     resource: deployments
 
   services:
-  - group: postgresql.baiju.dev
+  - group: postgresql.dev
     version: v1alpha1
     kind: Database
     name: db-demo
@@ -63,12 +63,39 @@ An application can be referenced either by name or by labels.
     resource: deployments
 ```
 
+### Service
+
+One or more services can be bound with application.
+
+```
+  services:
+  - group: postgresql.dev
+    version: v1alpha1
+    kind: Database
+    name: db-demo
+
+  - group: mongodb.dev
+    version: v1beta1
+    kind: Database
+    name: mongodb
+
+  - group: kafka.dev
+    version: v1
+    kind: Kafka
+    name: kafka-demo
+```
+
 ### Status
 
 Status of Service Binding on success:
 
 ```
 status:
+  applications:
+  - name: nodejs-app
+    group: apps
+    version: v1
+    resource: deployments
   conditions:
   - lastHeartbeatTime: "2020-10-15T13:23:36Z"
     lastTransitionTime: "2020-10-15T13:23:23Z"
@@ -81,6 +108,7 @@ status:
   secret: binding-request-72ddc0c540ab3a290e138726940591debf14c581
 ```
 where:
+- applications returns each matching application resource
 - Conditions represent the latest available observations of Service Binding's state
 - Secret represents the name of the secret created by the Service Binding Operator
 
