@@ -55,7 +55,7 @@ metadata:
   namespace: service-binding-demo
 spec:
   application:
-    name: java-app
+    name: nodejs-app
     group: apps
     version: v1
     resource: deployments
