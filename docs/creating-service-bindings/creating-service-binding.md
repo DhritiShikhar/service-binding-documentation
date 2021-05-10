@@ -44,7 +44,7 @@ An application can be referenced either by name or by labels.
 
 #### Reference by Name
 
-```
+```yaml
   application:
     name: nodejs-app
     group: apps
@@ -54,7 +54,7 @@ An application can be referenced either by name or by labels.
 
 #### Reference by Label Selector
 
-```
+```yaml
   application:
     matchLabels:
       app: frontend
@@ -67,7 +67,7 @@ An application can be referenced either by name or by labels.
 
 One or more services can be bound with application.
 
-```
+```yaml
   services:
   - group: postgresql.dev
     version: v1alpha1
@@ -89,7 +89,7 @@ One or more services can be bound with application.
 
 Status of Service Binding on success:
 
-```
+```yaml
 status:
   applications:
   - name: nodejs-app
