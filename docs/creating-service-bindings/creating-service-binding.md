@@ -40,7 +40,7 @@ There are 2 parts in the request:
 
 ### Application
 
-An application can be referenced by name or by labels.
+An application can be referenced either by name or by labels.
 
 #### Reference by Name
 
