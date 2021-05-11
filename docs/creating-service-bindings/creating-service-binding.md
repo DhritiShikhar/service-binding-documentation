@@ -12,6 +12,11 @@ If it's not the case, please refer to the following section(#)
 
 ### Service Binding Resource
 
+Service Binding resources use `binding.operators.coreos.com` group with  `v1alpha1` version and `ServiceBinding` kind.
+
+A sample Service Binding Resource that connects a nodejs application to a postgresql database:
+
+
 ```yaml
 apiVersion: binding.operators.coreos.com/v1alpha1
 kind: ServiceBinding
@@ -22,7 +27,7 @@ metadata:
 spec:
 
   application:
-    name: nodejs-app
+    name: nodejs-rest-http-crud
     group: apps
     version: v1
     resource: deployments
@@ -34,15 +39,54 @@ spec:
     name: db-demo
 ```
 
-There are 2 parts in the request:
+The `spec` of a Service Binding resource has two sections:
 - application
 - services
 
 ### Application
 
-An application can be referenced either by name or by labels.
+An application is a process running within a container. Examples include a NodeJS Express application, a Ruby Rails application or a Spring Boot application.
+
+A sample NodeJS application:
+
+```yaml
+kubectl apply -f - << EOD
+---
+apiVersion: apps/v1 
+kind: Deployment    
+
+metadata:
+  name: nodejs-rest-http-crud
+  labels:
+    app: nodejs-rest-http-crud
+    runtime: nodejs
+    runtime-version: 14-ubi7
+
+spec:
+  selector:
+    matchLabels:
+      app: nodejs-rest-http-crud
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nodejs-rest-http-crud
+        deploymentconfig: nodejs-rest-http-crud
+    spec:
+      containers:
+      - name: nodejs-rest-http-crud
+        image: nodejs-rest-http-crud:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+EOD
+```
+
+An application can be referenced either by name or by labels. It is recommended to use either name or label but not both of them together.
 
 #### Reference by Name
+
+Name can be used to select a single resource.
 
 ```yaml
   application:
@@ -54,10 +98,27 @@ An application can be referenced either by name or by labels.
 
 #### Reference by Label Selector
 
+Labels can be used to select a collection of resources.
+
 ```yaml
   application:
     matchLabels:
-      app: frontend
+      component: frontend
+      release: canary
+    group: apps
+    version: v1
+    resource: deployments
+```
+
+In the case of multiple labels, all must be satisfied in a logical AND (&&) operator.
+
+```yaml
+  application:
+    matchLabels:
+      component: frontend
+      release: canary
+    matchLabels:
+      version: "5.2.10"
     group: apps
     version: v1
     resource: deployments
