@@ -162,7 +162,7 @@ Service Binding Operator Status has three parts:
 - `conditions` represent the latest available observations of Service Binding's state
 - `secret` represents the name of the secret created by the Service Binding Operator
 
-A sample service binding status on success:
+A sample service binding status:
 
 ```yaml
 status:
