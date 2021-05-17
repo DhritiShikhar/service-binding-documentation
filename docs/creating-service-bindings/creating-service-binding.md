@@ -14,7 +14,7 @@ If it's not the case, please refer to the following section(#)
 
 Service Binding resources use `binding.operators.coreos.com` group with  `v1alpha1` version and `ServiceBinding` kind.
 
-A sample Service Binding Resource that connects a nodejs application to a postgresql database:
+A sample Service Binding resource that connects a nodejs application to a postgresql database:
 
 
 ```yaml
@@ -47,16 +47,16 @@ The `spec` of a Service Binding resource has two sections:
 
 An application is a process running within a container. Examples include a NodeJS Express application, a Ruby Rails application or a Spring Boot application.
 
-A sample NodeJS application:
+Create a NodeJS application:
 
 ```yaml
 kubectl apply -f - << EOD
 ---
-apiVersion: apps/v1 
-kind: Deployment    
+apiVersion: apps/v1 ############################### GROUP/VERSION
+kind: Deployment    ############################### RESOURCE
 
 metadata:
-  name: nodejs-rest-http-crud
+  name: nodejs-rest-http-crud  #################### NAME
   labels:
     app: nodejs-rest-http-crud
     runtime: nodejs
@@ -82,73 +82,87 @@ spec:
 EOD
 ```
 
-An application can be referenced either by name or by labels. It is recommended to use either name or label but not both of them together.
-
-#### Reference by Name
-
-Name can be used to select a single resource.
-
-```yaml
-  application:
-    name: nodejs-app
-    group: apps
-    version: v1
-    resource: deployments
-```
-
-#### Reference by Label Selector
-
-Labels can be used to select a collection of resources.
-
-```yaml
-  application:
-    matchLabels:
-      component: frontend
-      release: canary
-    group: apps
-    version: v1
-    resource: deployments
-```
-
-In the case of multiple labels, all must be satisfied in a logical AND (&&) operator.
-
-```yaml
-  application:
-    matchLabels:
-      component: frontend
-      release: canary
-    matchLabels:
-      version: "5.2.10"
-    group: apps
-    version: v1
-    resource: deployments
-```
+Application can be a podSpec based resource like "Deployment" or "DeploymentConfig" or a non podSepc based resource like a Custom Resource Definition.
 
 ### Service
 
-One or more services can be bound with application.
+Apply the following CatalogSource:
 
 ```yaml
-  services:
-  - group: postgresql.dev
-    version: v1alpha1
-    kind: Database
-    name: db-demo
+kubectl apply -f - << EOD
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+    name: sample-db-operators
+    namespace: openshift-marketplace
+spec:
+    sourceType: grpc
+    image: quay.io/redhat-developer/sample-db-operators-olm:v1
+    displayName: Sample DB Operators
+EOD
+```
 
-  - group: mongodb.dev
-    version: v1beta1
-    kind: Database
-    name: mongodb
+Then navigate to the `Operators` -> `OperatorHub` in the OpenShift console and in the `Database` category select the `PostgreSQL Database operator` and install a beta version.
 
-  - group: kafka.dev
+Create a postgresql database:
+
+```yaml
+kubectl apply -f - << EOD
+---
+apiVersion: postgresql.baiju.dev/v1alpha1 ########### GROUP/VERSION
+kind: Database ###################################### RESOURCE
+metadata:
+  name: db-demo ##################################### NAME
+  namespace: service-binding-demo
+spec:
+  image: docker.io/postgres
+  imageName: postgres
+  dbName: db-demo
+EOD
+```
+
+### Service Binding
+
+To connect the `nodejs-rest-http-crud` Deployment with `db-demo` Database,
+create a `ServiceBinding` custom resource which includes both Deployment and Database metadata:
+- Group 
+- Version 
+- Resource 
+- Name
+
+```yaml
+apiVersion: binding.operators.coreos.com/v1alpha1
+kind: ServiceBinding
+
+metadata:
+  name: binding-request 
+
+spec:
+
+  application:
+    group: apps 
     version: v1
-    kind: Kafka
-    name: kafka-demo
+    resource: deployments
+    name: nodejs-app
+
+  service:
+   group: postgresql.baiju.dev
+   version: v1alpha1
+   resource: Database
+   name: db-demo
 ```
 
 ### Status
 
-Status of Service Binding on success:
+The `status` describes the current state of the `ServiceBinding` object. The operator continually and actively manages every object's actual state to match the desired state you supplied.
+
+Service Binding Operator Status has three parts:
+- `applications` return each matching application resource
+- `conditions` represent the latest available observations of Service Binding's state
+- `secret` represents the name of the secret created by the Service Binding Operator
+
+A sample service binding status on success:
 
 ```yaml
 status:
@@ -166,15 +180,29 @@ status:
     lastTransitionTime: "2020-10-15T13:23:23Z"
     status: "True"
     type: InjectionReady
+  - lastHeartbeatTime: "2020-10-15T13:23:36Z"
+    lastTransitionTime: "2020-10-15T13:23:23Z"
+    status: "True"
+    type: Ready
   secret: binding-request-72ddc0c540ab3a290e138726940591debf14c581
 ```
-where:
-- applications returns each matching application resource
-- Conditions represent the latest available observations of Service Binding's state
-- Secret represents the name of the secret created by the Service Binding Operator
 
-Conditions have two types `CollectionReady` and `InjectionReady`:
-- CollectionReady type represents collection of secret from the service
-- InjectionReady type represents injection of secret into the application
+#### Conditions
 
-By default, Service Binding Operator injects the service credentials as files in the application under `/bindings` directory.
+Service Binding Status Conditions have three types:
+
+- `CollectionReady` type represents collection of secrets from the service. On failure of collecting secrets from the service, the `conditions.status` becomes "False" with a reason.
+
+- `InjectionReady` type represents injection of secret into the application. On failure to inject information into the service, the `conditions.status` becomes "False" with a reason.
+
+- Ready type represents overall ready status. On failure, the `conditions.status` becomes "False" with a reason.
+
+Conditions can have the following combination of type, status and reason:
+
+| Type            | Status | Reason               | Type           | Status | Reason                   | Type           | Status | Reason                    |
+| --------------- | ------ | -------------------- | -------------- | ------ | ------------------------ |----------------|--------|---------------------------|
+| CollectionReady | False  | EmptyServiceSelector | InjectionReady | False  |                          | Ready          | False  | EmptyServiceSelector      |
+| CollectionReady | False  | ServiceNotFound      | InjectionReady | False  |                          | Ready          | False  | ServiceNotFound           |
+| CollectionReady | True   |                      | InjectionReady | False  | EmptyApplicationSelector | Ready          | True   | EmptyApplicationSelector  |
+| CollectionReady | True   |                      | InjectionReady | False  | ApplicationNotFound      | Ready          | False  | ApplicationNotFound       |
+| CollectionReady | True   |                      | InjectionReady | True   |                          | Ready          | True   |                           |
