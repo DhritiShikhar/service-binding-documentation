@@ -155,7 +155,7 @@ spec:
 
 ### Status
 
-The `status` describes the current state of the `ServiceBinding` object. The operator continually and actively manages every object's actual state to match the desired state you supplied.
+The `status` describes the current state of the `ServiceBinding` object. The operator continually and actively manages every object's actual state to match the desired state.
 
 Service Binding Operator Status has three parts:
 - `applications` return each matching application resource
