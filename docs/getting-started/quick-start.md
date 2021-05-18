@@ -6,7 +6,7 @@ sidebar_position: 2
 
 In this section we are providing a sample application that one can deploy and just use to play around.
 
-## K8S
+## Kubernetes
 
 ### Application
 
@@ -116,6 +116,25 @@ spec:
    version: v1alpha1
    resource: Database
    name: db-demo
+```
+
+The Service Binding status should be updated:
+
+```yaml
+status:
+  conditions:
+  - lastHeartbeatTime: "2021-05-17T09:05:46Z"
+    lastTransitionTime: "2021-05-17T07:09:48Z"
+    status: "True"
+    type: CollectionReady
+  - lastHeartbeatTime: "2021-05-17T09:05:46Z"
+    lastTransitionTime: "2021-05-17T07:09:48Z"
+    status: "True"
+    type: InjectionReady
+  - lastHeartbeatTime: "2021-05-17T09:05:46Z"
+    lastTransitionTime: "2021-05-17T07:09:48Z"
+    status: "True"
+    type: Ready
 ```
 
 ## OpenShift
