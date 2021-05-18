@@ -10,7 +10,7 @@ In this section, we consider that the service you want to connect to is already 
 If it's not the case, please refer to the following section(#)
 
 
-### Service Binding Resource
+## Service Binding Resource
 
 Service Binding resources use `binding.operators.coreos.com` group with  `v1alpha1` version and `ServiceBinding` kind.
 
@@ -38,126 +38,42 @@ spec:
     kind: Database
     name: db-demo
 ```
+`.apiVersion` is a combination of API group and version in the format `<group>/<version>`. To create a service binding, `binding.operators.coreos.com` group and `v1alpha1` version is used. 
 
-The `spec` of a Service Binding resource has two sections:
-- application
-- services
+`.kind` is the type of the kubernetes resource. To create a service binding, `ServiceBinding` kind is used.
 
-### Application
+`.metadata.name` specifies a unique name for `ServiceBinding` object within a namespace.
 
-An application is a process running within a container. Examples include a NodeJS Express application, a Ruby Rails application or a Spring Boot application.
+## Spec
 
-Create a NodeJS application:
+`.spec` describes desired state of binding provided by the user.
 
-```yaml
-kubectl apply -f - << EOD
----
-apiVersion: apps/v1 ############################### GROUP/VERSION
-kind: Deployment    ############################### RESOURCE
+`.spec.application` is used to uniquely identify an application resource
 
-metadata:
-  name: nodejs-rest-http-crud  #################### NAME
-  labels:
-    app: nodejs-rest-http-crud
-    runtime: nodejs
-    runtime-version: 14-ubi7
+  - `.spec.application.group`: It is the API group of the application resource. It can be collected from the `group` part of the `apiVersion` field of the application object. Example: If the `apiVersion` field of the application object is `apps/v1`, `apps` is the API group of the resource. 
+  
+  - `.spec.application.version`: It is the API group version of the application resource. It can be collected from the `version` part of the `apiVersion` field of the application object. Example: If the `apiVersion` field of the application object is `apps/v1`, `v1` is the API group version of the resource. 
 
-spec:
-  selector:
-    matchLabels:
-      app: nodejs-rest-http-crud
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: nodejs-rest-http-crud
-        deploymentconfig: nodejs-rest-http-crud
-    spec:
-      containers:
-      - name: nodejs-rest-http-crud
-        image: nodejs-rest-http-crud:latest
-        ports:
-        - containerPort: 8080
-          protocol: TCP
-EOD
-```
+  - `.spec.application.resource`: It is the type of the application resource. It can be collected from `.kind` field of the application resource.
+  
+  - `.spec.application.name`: It is the unique name of the application. It can be collected from `.metadata.name` field of the application object.
 
-Application can be a podSpec based resource like "Deployment" or "DeploymentConfig" or a non podSepc based resource like a Custom Resource Definition.
+`.spec.service` is used to uniquely identify a service resource
 
-### Service
+  - `.spec.service.group`: It is the API group of the service resource. It can be collected from the `group` part of the `apiVersion` field of the service object. Example: If the `apiVersion` field of the service object is `apps/v1`, `apps` is the API group of the resource. 
 
-Apply the following CatalogSource:
+  - `.spec.service.version`: It is the API group version of the service resource. It can be collected from the `version` part of the `apiVersion` field of the service object. Example: If the `apiVersion` field of the service object is `apps/v1`, `v1` is the API group version of the resource. 
 
-```yaml
-kubectl apply -f - << EOD
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-    name: sample-db-operators
-    namespace: openshift-marketplace
-spec:
-    sourceType: grpc
-    image: quay.io/redhat-developer/sample-db-operators-olm:v1
-    displayName: Sample DB Operators
-EOD
-```
+  - `.spec.service.resource`: It is the type of the service resource. It can be collected from `.kind` field of the service resource.
+  
+  - `.spec.service.name`: It is the unique name of the service. It can be collected from `.metadata.name` field of the service object.
 
-Then navigate to the `Operators` -> `OperatorHub` in the OpenShift console and in the `Database` category select the `PostgreSQL Database operator` and install a beta version.
 
-Create a postgresql database:
+## Status
 
-```yaml
-kubectl apply -f - << EOD
----
-apiVersion: postgresql.baiju.dev/v1alpha1 ########### GROUP/VERSION
-kind: Database ###################################### RESOURCE
-metadata:
-  name: db-demo ##################################### NAME
-  namespace: service-binding-demo
-spec:
-  image: docker.io/postgres
-  imageName: postgres
-  dbName: db-demo
-EOD
-```
+`.status` describes current state of binding provided by the operator. The operator continually and actively manages every object's actual state to match the desired state.
 
-### Service Binding
-
-To connect the `nodejs-rest-http-crud` Deployment with `db-demo` Database,
-create a `ServiceBinding` custom resource which includes both Deployment and Database metadata:
-- Group 
-- Version 
-- Resource 
-- Name
-
-```yaml
-apiVersion: binding.operators.coreos.com/v1alpha1
-kind: ServiceBinding
-
-metadata:
-  name: binding-request 
-
-spec:
-
-  application:
-    group: apps 
-    version: v1
-    resource: deployments
-    name: nodejs-app
-
-  service:
-   group: postgresql.baiju.dev
-   version: v1alpha1
-   resource: Database
-   name: db-demo
-```
-
-### Status
-
-The `status` describes the current state of the `ServiceBinding` object. The operator continually and actively manages every object's actual state to match the desired state.
-
-Service Binding Operator Status has three parts:
+Service Binding Status has three parts:
 - `applications` return each matching application resource
 - `conditions` represent the latest available observations of Service Binding's state
 - `secret` represents the name of the secret created by the Service Binding Operator
@@ -187,7 +103,7 @@ status:
   secret: binding-request-72ddc0c540ab3a290e138726940591debf14c581
 ```
 
-#### Conditions
+### Conditions
 
 Service Binding Status Conditions have three types:
 
@@ -195,7 +111,7 @@ Service Binding Status Conditions have three types:
 
 - `InjectionReady` type represents injection of secret into the application. On failure to inject information into the service, the `conditions.status` becomes "False" with a reason.
 
-- Ready type represents overall ready status. On failure, the `conditions.status` becomes "False" with a reason.
+- `Ready` type represents overall ready status. On failure, the `conditions.status` becomes "False" with a reason.
 
 Conditions can have the following combination of type, status and reason:
 
