@@ -155,8 +155,3 @@ spec:
 
 For help report an issue on [Github](https://github.com/redhat-developer/service-binding-operator)
 
-## Helm
-
-_To be provided soon_
-
-
