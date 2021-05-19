@@ -6,15 +6,31 @@ sidebar_position: 1
 
 ## Compatiblity Note
 
-## Install on Kubernetes
+### Platforms
 
-1. Follow the [installation guide](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md) to install OLM, a tool to help manage operators running on the cluster.
+The Service Binding Operator is compatible with:
+- Kubernetes >= v1.7.0
+- Openshift >= 4.5 
+
+### Pre-requisites
+
+- OLM : Follow the [installation guide](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md) to install OLM, a tool to help manage operators running on the cluster.
+
+## Install on Kubernetes
 
 2. Install Service Binding Operator
 
 ```console
-$ kubectl create -f https://operatorhub.io/install/service-binding-operator.yaml
-subscription.operators.coreos.com/my-service-binding-operator created
+$ kubectl apply -f https://github.com/redhat-developer/service-binding-operator/releases/download/v0.7.1/release.yaml
+namespace/service-binding-operator created
+configmap/service-binding-operator-manager-config created
+clusterrole.rbac.authorization.k8s.io/service-binding-operator created
+deployment.apps/service-binding-operator created
+clusterrole.rbac.authorization.k8s.io/service-binding-operator-servicebinding-viewer-role created
+customresourcedefinition.apiextensions.k8s.io/servicebindings.binding.operators.coreos.com created
+clusterrole.rbac.authorization.k8s.io/service-binding-operator-servicebinding-editor-role created
+clusterrolebinding.rbac.authorization.k8s.io/service-binding-operator created
+serviceaccount/service-binding-operator created
 ```
 
 The operator will be installed in the "operators" namespace and will be usable from all other namespaces in the cluster.
@@ -25,7 +41,6 @@ The operator will be installed in the "operators" namespace and will be usable f
 $ k get csv -n operators
 NAME                              DISPLAY                    VERSION   REPLACES   PHASE
 service-binding-operator.v0.4.0   Service Binding Operator   0.4.0                Succeeded
-
 ```
 
 4. To verify the installation, create a Service Binding:
