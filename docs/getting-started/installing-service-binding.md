@@ -8,37 +8,27 @@ sidebar_position: 1
 
 ## Install on Kubernetes
 
-1. Install Operator Lifecycle Manager (OLM), a tool to help manage the Operators running on your cluster.
-
-```
-curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.1/install.sh | bash -s v0.18.1
-```
+1. Follow the [installation guide](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md) to install OLM, a tool to help manage operators running on the cluster.
 
 2. Install Service Binding Operator
 
-```
-kubectl create -f https://operatorhub.io/install/service-binding-operator.yaml
+```console
+$ kubectl create -f https://operatorhub.io/install/service-binding-operator.yaml
+subscription.operators.coreos.com/my-service-binding-operator created
 ```
 
 The operator will be installed in the "operators" namespace and will be usable from all other namespaces in the cluster.
 
 3. Check if operator has been installed successfully:
 
-```
-kubectl get csv -n operators
-```
+```console
+$ k get csv -n operators
+NAME                              DISPLAY                    VERSION   REPLACES   PHASE
+service-binding-operator.v0.4.0   Service Binding Operator   0.4.0                Succeeded
 
-4. Run the following command:
-
-```
-kubectl get sbr
 ```
 
-If the output is `No resources found`, then Service Binding Operator is successfully installed.
-
-If the output is `error: the server doesn't have a resource type "sbr"`, then the Service Binding operator installation was unsuccessful. For help report an issue on [Github](https://github.com/redhat-developer/service-binding-operator).
-
-5. To verify the installation, create a Service Binding:
+4. To verify the installation, create a Service Binding:
 
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
