@@ -16,12 +16,15 @@ The Service Binding Operator is compatible with:
 
 - OLM : Follow the [installation guide](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/install/install.md) to install OLM, a tool to help manage operators running on the cluster.
 
+- kubectl : Follow the [installation guide](https://kubernetes.io/docs/tasks/tools/) to install kubectl, a tool which runs command against Kubernetes cluster.
+
 ## Install on Kubernetes
 
-2. Install Service Binding Operator
+1. Install Service Binding Operator
 
 ```console
 $ kubectl apply -f https://github.com/redhat-developer/service-binding-operator/releases/download/v0.7.1/release.yaml
+
 namespace/service-binding-operator created
 configmap/service-binding-operator-manager-config created
 clusterrole.rbac.authorization.k8s.io/service-binding-operator created
@@ -35,17 +38,20 @@ serviceaccount/service-binding-operator created
 
 The operator will be installed in the "operators" namespace and will be usable from all other namespaces in the cluster.
 
-3. Check if operator has been installed successfully:
+2. Check if operator has been installed successfully:
 
 ```console
-$ k get csv -n operators
+$ kubectl get csv -n operators
+
 NAME                              DISPLAY                    VERSION   REPLACES   PHASE
 service-binding-operator.v0.4.0   Service Binding Operator   0.4.0                Succeeded
 ```
 
-4. To verify the installation, create a Service Binding:
+3. To verify the installation, create a Service Binding:
 
-```yaml
+```console
+$ kubectl apply -f - << EOD
+---
 apiVersion: operators.coreos.com/v1alpha1
 kind: ServiceBinding
 metadata:
@@ -56,6 +62,7 @@ spec:
                     version: v1
                     kind: Backend
                     name: backend-demo
+EOD
 ```
 
 The output should be:
@@ -127,19 +134,27 @@ status:
 
 ## Install on Openshift
 
-1. Navigate to the `Operators` -> `OperatorHub` in the OpenShift console.
+1. Login to your Openshift Console as a Cluster Admin to install the Service Binding Operator.
+
+![Developer Console](../../static/img/docs/console-login.png)
+
+2. Navigate to the `Operators` -> `OperatorHub` in the OpenShift console.
 
 2. Select `Developer Tools` category.
 
+![Service Binding Operator](../../static/img/docs/operatorhub.png)
+
 3. Select the `Service Binding Operator`:
 
-![Service Binding Operator](https://github.com/redhat-developer/service-binding-operator/blob/master/assets/operator-hub-sbo-screenshot.png)
+![Service Binding Operator](../../static/img/docs/operator-hub-sbo-screenshot.png)
 
 4. Select `beta` channel.
 
 5. Select `All namespaces on the cluster` installation mode.
 
 6. Select `Automatic` approval strategy.
+
+![Service Binding Operator](../../static/img/docs/operator-installation.png)
 
 7. Click on `Install`.
 
