@@ -18,12 +18,16 @@ nodejs-rest-http-crud-56d679c5cd-5hn2z   1/1       Running     0          3m19s
 
 Example:
 ```
-kubectl exec -it nodejs-rest-http-crud-56d679c5cd-5hn2z -- printenv
+➜  ~ kubectl exec -it nodejs-rest-http-crud-56d679c5cd-5hn2z -- printenv
 MONGODB_BINDING_USERNAME=admin
 MONGODB_BINDING_PASSWORD=password
 ```
 
 ## How to use injected binding in the application
+
+The application code can fetch the environment variable or files and use it in the code.
+
+Example:
 
 ```js
 const basicAuthUsername = 'MONGODB_BINDING_USERNAME'
