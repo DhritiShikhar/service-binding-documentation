@@ -4,9 +4,7 @@ sidebar_position: 6
 
 # Service Binding Resource
 
-## Service Binding Resource
-
-Service Binding resources use `binding.operators.coreos.com` group with  `v1alpha1` version and `ServiceBinding` kind.
+Service Binding resources use `binding.operators.coreos.com` group with  `v1alpha1` version and `ServiceBinding` kind. Read more about the required fields [here](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#required-fields).
 
 A sample Service Binding resource that connects a nodejs application to a postgresql database:
 
@@ -16,7 +14,7 @@ apiVersion: binding.operators.coreos.com/v1alpha1
 kind: ServiceBinding
 
 metadata:
-  name: binding-request 
+  name: database-binding 
 
 spec:
 
@@ -33,30 +31,16 @@ spec:
     name: db-demo
 ```
 
-
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| .apiVersion | string | APIVersion defines the versioned schema of this representation of an object |
-| .kind | string | Kind is a string value representing the REST resource this object represents |
-| .metadata.name | string | Name is primarily intended for creation idempotence and configuration definition. It cannot be updated. It must be unique within a namespace |
-| .metadata.namespace | string | Namespace of the resource |
-| .spec | object | Spec describes the application and services |
-| .status | object | Current status of the service binding |
-
 ## Service Binding Spec
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| .spec.application | array (string) | It is used to uniquely identify an application resource |
-| .spec.application.group | string | It is the API group of the application resource |
-| .spec.application.version | string | It is the API group version of the application resource |
-| .spec.application.resource | string | It is the type of the application resource. It can be collected from `.kind` field of the application resource |
-| .spec.application.name | string | It is the unique name of the application. It can be collected from `.metadata.name` field of the application object |
-| .spec.service | array (string) | It is used to uniquely identify a service resource |
-| .spec.service.group | string | It is the API group of the service resource |
-| .spec.service.version | string | It is the API group version of the application resource |
-| .spec.service.resource | string | It is the type of the service resource. It can be collected from `.kind` field of the service resource |
-| .spec.service.name | string | It is the unique name of the service. It can be collected from `.metadata.name` field of the service object |
+`.spec` describes the desired state of binding provided by the user.
+
+| Property                    | Type | Description |
+| --------------------------- | ---- | ----------- |
+| .spec.application           | object | It is used to uniquely identify an application using Name, Group, Version and Resource |
+| .spec.service               | array (object) | It is used to uniquely identify a service using Name, Group, Version and Kind |
+
+Read more details on Group, Version and Kinds [here](https://book.kubebuilder.io/cronjob-tutorial/gvks.html).
 
 ## Service Binding Status
 
@@ -64,7 +48,6 @@ spec:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| .applications | string | It describes each bound application resource |
 | .conditions | string | It represents the latest available observations of Service Binding's state |
 | .secret | string | represents the name of the binding secret created by the Service Binding Operator |
 
@@ -99,27 +82,31 @@ Service Binding Status Conditions have three types:
 
 | Condition | Description |
 | -------- | ----------- |
-| CollectionReady | It represents collection of secrets from the service. On failure of collecting secrets from the service, the `conditions.status` becomes "False" with a reason.
+| CollectionReady | It Indicates if binding data are collected from the referred service. On failure the `condition.status` is set to "False" and `condition.reason` provides more details.
  |
-| InjectionReady | It represents injection of secret into the application. On failure to inject information into the service, the `conditions.status` becomes "False" with a reason. |
-| Ready | It represents overall ready status. On failure, the `conditions.status` becomes "False" with a reason. |
+| InjectionReady | It indicates if binding data are injected into application. On failure, the `condition.status` is set to "False" and `condition.reason` provides more details. |
+| Ready | It indicates if binding is successful. On failure, the `condition.status` is set to "False" and `condition.reason` provides more details. |
 
-Conditions can have the following combination of type, status and reason:
+## Bind as files or environment variables
 
-| Type            | Status | Reason               | Type           | Status | Reason                   | Type           | Status | Reason                    |
-| --------------- | ------ | -------------------- | -------------- | ------ | ------------------------ |----------------|--------|---------------------------|
-| CollectionReady | False  | EmptyServiceSelector | InjectionReady | False  |                          | Ready          | False  | EmptyServiceSelector      |
-| CollectionReady | False  | ServiceNotFound      | InjectionReady | False  |                          | Ready          | False  | ServiceNotFound           |
-| CollectionReady | True   |                      | InjectionReady | False  | EmptyApplicationSelector | Ready          | True   | EmptyApplicationSelector  |
-| CollectionReady | True   |                      | InjectionReady | False  | ApplicationNotFound      | Ready          | False  | ApplicationNotFound       |
-| CollectionReady | True   |                      | InjectionReady | True   |                          | Ready          | True   |                           |
-
-## Advanced Options
+Service Binding Operator provides the ability to inject bindings as files or environment variables. By default, `bindAsFiles` is set to "True" and bindings are injected as files in the location '/bindings'.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| .spec.bindAsFiles | bool | When set as `false` enables injecting gathered bindings as env variables into the application/workload |
-| .spec.detectBindingResource | bool | The operator binds all information from dependent resources (secrets, configMaps, services) owned by backingService CR |
+| .spec.bindAsFiles | bool | When set as "False" enables injecting gathered bindings as env variables into the application/workload |
+
+To modify the default location of the bindings, `mountPath` can be set.
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
 | .spec.mounthPath | string | It is used to specify a custom binding root path |
-| .spec.mappings | array (object) | It is used to set customized binding secrets using a combination of Go and jsonpath templating |
-| .spec.namingStrategy | string | It is used to define injected environment variable key or file name |
+
+## Auto detect binding
+
+In a scenario, when annotations are not provided by the service provider, `detectBindingResource` can be used. 
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| .spec.detectBindingResource | bool | The operator binds all information from dependent resources (secrets, configMaps, services) owned by backingService CR |
+
+By default, `detectBindingResource` is set to "False".
